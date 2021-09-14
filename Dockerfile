@@ -7,7 +7,7 @@ LABEL maintainer="Jonathan Tey <jontey88@gmail.com>"
 
 # Testing: pamtester
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing/" >> /etc/apk/repositories && \
-    apk add --update openvpn iptables bash easy-rsa openvpn-auth-pam google-authenticator pamtester libqrencode && \
+    apk add --no-cache --update openvpn iptables bash easy-rsa openvpn-auth-pam google-authenticator pamtester libqrencode tcpdump socat supervisor && \
     ln -s /usr/share/easy-rsa/easyrsa /usr/local/bin && \
     rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/*
 
@@ -22,10 +22,11 @@ VOLUME ["/etc/openvpn"]
 # Internally uses port 1194/udp, remap using `docker run -p 443:1194/tcp`
 EXPOSE 1194/tcp
 
-CMD ["ovpn_run"]
-
-ADD ./bin /usr/local/bin
+COPY ./bin /usr/local/bin
 RUN chmod a+x /usr/local/bin/*
+COPY supervisord.conf /etc/supervisord.conf
 
 # Add support for OTP authentication using a PAM module
 ADD ./otp/openvpn /etc/pam.d/
+
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]
